@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loan Approval Predictor</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.8;
+            color: #666;
+        }
+        
+        .app-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .form-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .input-with-icon {
+            position: relative;
+        }
+        
+        .input-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #667eea;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 18px 30px;
+            font-size: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .result-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            display: none;
+        }
+        
+        .result-container.show {
+            display: block;
+            animation: fadeInUp 0.6s ease;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .approved {
+            border-left: 6px solid #2ecc71;
+        }
+        
+        .rejected {
+            border-left: 6px solid #e74c3c;
+        }
+        
+        .result-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .result-title {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: 700;
+        }
+        
+        .result-message {
+            font-size: 1.1rem;
+            margin-bottom: 25px;
+            text-align: center;
+            line-height: 1.8;
+        }
+        
+        .probability {
+            font-size: 1rem;
+            color: #7f8c8d;
+            margin-bottom: 25px;
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .probability-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+        
+        .try-again {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            margin-top: 10px;
+        }
+        
+        .try-again:hover {
+            background: linear-gradient(135deg, #7f8c8d, #95a5a6);
+        }
+        
+        .info-box {
+            background: rgba(255, 255, 255, 0.95);
+            border-left: 6px solid #667eea;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .info-title {
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #2c3e50;
+            font-size: 1.3rem;
+        }
+        
+        .info-text {
+            font-size: 1rem;
+            color: #5a6c7d;
+            line-height: 1.7;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .feature-highlights {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .feature {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .feature-text {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏦 Loan Approval Predictor</h1>
+            <p class="subtitle">AI-Powered Loan Application Assessment</p>
+            
+            <div class="feature-highlights">
+                <div class="feature">
+                    <div class="feature-icon">⚡</div>
+                    <div class="feature-text">Instant Prediction</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🎯</div>
+                    <div class="feature-text">Machine Learning</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔒</div>
+                    <div class="feature-text">Secure & Private</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-text">Accurate Results</div>
+                </div>
+            </div>
+        </header>
+        
+        <div class="info-box">
+            <div class="info-title">How It Works</div>
+            <div class="info-text">
+                Our advanced machine learning model analyzes your financial profile to predict loan approval probability. 
+                The system considers multiple factors including income, credit history, employment stability, and credit points 
+                to provide accurate predictions in real-time.
+            </div>
+        </div>
+        
+        <div class="app-container">
+            <div class="form-container">
+                <h2>📝 Applicant Information</h2>
+                <form id="loanForm">
+                    <div class="form-group">
+                        <label for="income">💵 Annual Income ($)</label>
+                        <div class="input-with-icon">
+                            <input type="number" id="income" name="income" min="30000" max="150000" value="75000" required>
+                            <span class="input-icon">💰</span>
+                        </div>
+                        <small style="color: #666; font-size: 12px;">Enter amount between $30,000 - $150,000</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="credit_score">📈 Credit Score</label>
+                        <div class="input-with-icon">
+                            <input type="number" id="credit_score" name="credit_score" min="300" max="850" value="650" required>
+                            <span class="input-icon">⭐</span>
+                        </div>
+                        <small style="color: #666; font-size: 12px;">Score range: 300 - 850</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="loan_amount">🏦 Loan Amount ($)</label>
+                        <div class="input-with-icon">
+                            <input type="number" id="loan_amount" name="loan_amount" min="1000" max="50000" value="20000" required>
+                            <span class="input-icon">💳</span>
+                        </div>
+                        <small style="color: #666; font-size: 12px;">Amount between $1,000 - $50,000</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="years_employed">💼 Years Employed</label>
+                        <div class="input-with-icon">
+                            <input type="number" id="years_employed" name="years_employed" min="0" max="40" value="5" required>
+                            <span class="input-icon">👔</span>
+                        </div>
+                        <small style="color: #666; font-size: 12px;">Years of employment: 0 - 40</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="points">🎯 Credit Points</label>
+                        <div class="input-with-icon">
+                            <select id="points" name="points" required>
+                                <option value="">Select credit points</option>
+                                <option value="10">10 - Very Poor</option>
+                                <option value="20">20 - Poor</option>
+                                <option value="25">25 - Below Average</option>
+                                <option value="30">30 - Average</option>
+                                <option value="35">35 - Fair</option>
+                                <option value="40">40 - Good</option>
+                                <option value="45">45 - Very Good</option>
+                                <option value="50" selected>50 - Excellent</option>
+                                <option value="55">55 - Outstanding</option>
+                                <option value="60">60 - Exceptional</option>
+                                <option value="65">65 - Premium</option>
+                                <option value="70">70 - Elite</option>
+                                <option value="75">75 - Superior</option>
+                                <option value="80">80 - Prime</option>
+                                <option value="85">85 - Excellent Prime</option>
+                                <option value="90">90 - Top Tier</option>
+                                <option value="95">95 - Premium Plus</option>
+                                <option value="100">100 - Perfect</option>
+                            </select>
+                            <span class="input-icon">🎯</span>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" id="submitBtn">
+                        🔮 Check Loan Approval
+                    </button>
+                    
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                        <p>Analyzing your application with AI...</p>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="result-container" id="resultContainer">
+                <div class="result-icon" id="resultIcon">📊</div>
+                <div class="result-title" id="resultTitle">Prediction Result</div>
+                <div class="result-message" id="resultMessage"></div>
+                <div class="probability" id="probability">
+                    Approval Probability: <span class="probability-value" id="probabilityValue">0%</span>
+                </div>
+                <button class="try-again" id="tryAgain">
+                    🔄 Check Another Application
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const loanForm = document.getElementById('loanForm');
+        const resultContainer = document.getElementById('resultContainer');
+        const resultTitle = document.getElementById('resultTitle');
+        const resultMessage = document.getElementById('resultMessage');
+        const resultIcon = document.getElementById('resultIcon');
+        const probabilityValue = document.getElementById('probabilityValue');
+        const tryAgainBtn = document.getElementById('tryAgain');
+        const submitBtn = document.getElementById('submitBtn');
+        const loading = document.getElementById('loading');
+
+        // API Configuration
+        const API_BASE_URL = 'http://localhost:5000';
+
+        // Event Listeners
+        loanForm.addEventListener('submit', handleFormSubmit);
+        tryAgainBtn.addEventListener('click', resetForm);
+
+        // Form Submission Handler
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            // Get form values
+            const formData = {
+                income: parseInt(document.getElementById('income').value),
+                credit_score: parseInt(document.getElementById('credit_score').value),
+                loan_amount: parseInt(document.getElementById('loan_amount').value),
+                years_employed: parseInt(document.getElementById('years_employed').value),
+                points: parseInt(document.getElementById('points').value)
+            };
+
+            // Validate form
+            if (!validateForm(formData)) {
+                return;
+            }
+
+            // Show loading state
+            setLoadingState(true);
+
+            try {
+                // Make API call
+                const prediction = await predictLoan(formData);
+                
+                if (prediction.error) {
+                    throw new Error(prediction.error);
+                }
+
+                // Display results
+                displayResult(prediction);
+                
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                setLoadingState(false);
+            }
+        }
+
+        // API Call Function
+        async function predictLoan(formData) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/predict`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('API Call Failed:', error);
+                return { error: 'Failed to connect to prediction service' };
+            }
+        }
+
+        // Display Result Function
+        function displayResult(prediction) {
+            const isApproved = prediction.approved;
+            const probability = (prediction.probability * 100).toFixed(1);
+
+            // Update UI based on prediction
+            if (isApproved) {
+                resultContainer.className = 'result-container show approved';
+                resultIcon.textContent = '🎉';
+                resultTitle.textContent = 'Congratulations!';
+                resultTitle.style.color = '#2ecc71';
+                resultMessage.textContent = 'Your loan application is likely to be approved based on our AI analysis.';
+                resultMessage.innerHTML += '<br><strong>Next Steps:</strong> Contact our loan officers to proceed with your application.';
+            } else {
+                resultContainer.className = 'result-container show rejected';
+                resultIcon.textContent = '📋';
+                resultTitle.textContent = 'Further Review Needed';
+                resultTitle.style.color = '#e74c3c';
+                resultMessage.textContent = 'Based on the information provided, your loan application may require additional review.';
+                resultMessage.innerHTML += '<br><strong>Recommendation:</strong> Consider improving your credit score or reducing the loan amount.';
+            }
+
+            // Update probability
+            probabilityValue.textContent = `${probability}%`;
+            probabilityValue.style.color = isApproved ? '#2ecc71' : '#e74c3c';
+
+            // Scroll to results
+            resultContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Form Validation
+        function validateForm(data) {
+            const errors = [];
+
+            if (data.income < 30000 || data.income > 150000) {
+                errors.push('Income must be between $30,000 and $150,000');
+            }
+
+            if (data.credit_score < 300 || data.credit_score > 850) {
+                errors.push('Credit score must be between 300 and 850');
+            }
+
+            if (data.loan_amount < 1000 || data.loan_amount > 50000) {
+                errors.push('Loan amount must be between $1,000 and $50,000');
+            }
+
+            if (data.years_employed < 0 || data.years_employed > 40) {
+                errors.push('Years employed must be between 0 and 40');
+            }
+
+            if (!data.points) {
+                errors.push('Please select credit points');
+            }
+
+            if (errors.length > 0) {
+                alert('Please fix the following errors:\n\n' + errors.join('\n'));
+                return false;
+            }
+
+            return true;
+        }
+
+        // Loading State Management
+        function setLoadingState(isLoading) {
+            if (isLoading) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Analyzing...';
+                loading.style.display = 'block';
+            } else {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🔮 Check Loan Approval';
+                loading.style.display = 'none';
+            }
+        }
+
+        // Error Display
+        function showError(message) {
+            alert(`Error: ${message}\n\nPlease ensure the backend server is running on ${API_BASE_URL}`);
+        }
+
+        // Reset Form
+        function resetForm() {
+            resultContainer.classList.remove('show');
+            loanForm.reset();
+            document.getElementById('points').value = '50'; // Reset to default
+        }
+
+        // Health Check on Page Load
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                if (response.ok) {
+                    console.log('✅ Backend is connected and healthy');
+                } else {
+                    console.warn('⚠️ Backend health check failed');
+                }
+            } catch (error) {
+                console.error('❌ Cannot connect to backend:', error);
+            }
+        });
+    </script>
+</body>
+</html>
